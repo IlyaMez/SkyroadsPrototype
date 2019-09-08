@@ -182,5 +182,4 @@ Shader "Jelly Button Games/Road" {
         }
     }
     FallBack "Diffuse"
-    CustomEditor "ShaderForgeMaterialInspector"
 }

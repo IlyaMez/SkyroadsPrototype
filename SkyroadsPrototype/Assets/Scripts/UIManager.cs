@@ -69,8 +69,8 @@ public class UIManager : MonoBehaviour
     public void UpdateUI()
     {
         timer.text = (Time.time - m_StartTime).ToString();
-        score.text = GameController.SessionData.currentScore.ToString();
-        highScore.text = GameController.SessionData.highScore.ToString();
+        score.text = "SCORE: " + GameController.SessionData.currentScore.ToString();
+        highScore.text = "HIGHSCORE: " + GameController.SessionData.highScore.ToString();
     }
 
     public void ToggleTimer()

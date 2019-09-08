@@ -97,8 +97,7 @@ public class GameController : MonoBehaviour {
                 levelProgress1 = new LevelProgress();
                 levelGenerator = new LevelGenerator();
                 levelGenerator.roadPrefab = roadPrefab;
-                levelGenerator.CreateInitialPath();
-                LevelProgress1.path = levelGenerator.path;
+                LevelProgress1.path = levelGenerator.CreateInitialPath();
                 shipInterface.InitializeShip();
                 break;
 
@@ -115,6 +114,7 @@ public class GameController : MonoBehaviour {
 
         state = newState;
     }
+
     private void CheckShipInput()
     {
 

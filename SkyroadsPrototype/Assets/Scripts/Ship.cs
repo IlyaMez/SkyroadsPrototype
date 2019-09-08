@@ -16,11 +16,12 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     private bool isMovingFoward = false;
     private bool isBoosted = false;
     private int targetPathPointIndex = 1;
+    private Transform shipModelTransform;
     #endregion
 
     #region CONSTANTS
     private const float SPEED = 20;
-    private const float SHIP_OFFSET_BOUNDS = 5.5f;
+    private const float SHIP_OFFSET_BOUNDS = 5.2f;
     private const float BOOST_SPEED_MULTIPLIER = 2;
     private const float X_AXIS_MOVEMENT_SPEED = 4f;
     private const float SHIP_TILT_ANGLE = 20f;
@@ -64,7 +65,7 @@ public class Ship : MonoBehaviour, IPlayerShipInput
         Vector3 newShipFoward = Vector3.RotateTowards(transform.forward,
                                                  (GameController.LevelProgress1.path[targetPathPointIndex + 1] + shipOffset) - transform.position,
                                                  finalSpeed * Time.deltaTime,
-                                                 finalSpeed  * Time.deltaTime);
+                                                 0);
 
         transform.position = newShipPos;
         transform.forward = newShipFoward;
@@ -83,7 +84,9 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     public void InitializeShip()
     {
         onShipCollision = new GameController.OnShipCollision(() => { });
+        shipModelTransform = GetComponentInChildren<MeshRenderer>().transform;
         transform.position = GameController.LevelProgress1.path[0];
+        shipOffset = new Vector3(0, 3, 0);
         transform.forward = Vector3.RotateTowards(transform.forward,
                                                 GameController.LevelProgress1.path[1] - transform.position,
                                                 100, 100);
@@ -118,6 +121,10 @@ public class Ship : MonoBehaviour, IPlayerShipInput
         }
 
         shipOffset.x = newOffset;
+
+        Vector3 localRot = shipModelTransform.localEulerAngles;
+        localRot.z = Mathf.LerpAngle(localRot.z, -dir * 30, 0.1f);
+        shipModelTransform.localEulerAngles = localRot;
     }
 
     public int GetTargetPoint()

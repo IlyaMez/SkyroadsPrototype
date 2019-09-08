@@ -1230,7 +1230,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   distance: 10
   height: 3
-  heightDamping: 4
+  heightDamping: 3
   rotationDamping: 3
   target: {fileID: 1782116405}
 --- !u!1 &1109788386
@@ -1686,7 +1686,7 @@ ParticleSystem:
     startSizeZ:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 1.39
+      scalar: 0.3
       minScalar: 1
       maxCurve:
         serializedVersion: 2

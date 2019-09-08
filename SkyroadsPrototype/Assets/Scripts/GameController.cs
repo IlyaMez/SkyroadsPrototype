@@ -4,6 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+/// <summary>
+/// Main game class - initializes all other classes and allows communication between them.
+/// </summary>
 public class GameController : MonoBehaviour {
 
 

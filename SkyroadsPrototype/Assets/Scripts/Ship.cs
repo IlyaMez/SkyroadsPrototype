@@ -24,7 +24,7 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     #endregion
 
     #region CONSTANTS
-    private const float SPEED = 30;
+    private const float SPEED = 22;
     private const float SHIP_OFFSET_BOUNDS = 5.2f; //defines how far the ship can move on X-axis. Should be the X-scale of the road prefab/ 2.
     private const float BOOST_SPEED_MULTIPLIER = 2; 
     private const float X_AXIS_MOVEMENT_SPEED = 8f; 

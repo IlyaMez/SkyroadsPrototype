@@ -9,6 +9,7 @@ public class GameController : MonoBehaviour {
 
     #region PUBLIC VARIABLES
     public GameObject roadPrefab;
+    public Obstacle obstaclePrefab;
     public class LevelProgress
     {
         public float shipZ;
@@ -31,7 +32,8 @@ public class GameController : MonoBehaviour {
 
 
     #region MEMBER VARIABLES
-    private bool gameStarted;
+    private int hightScore;
+    private int scoreBuffer = 0;
     private LevelGenerator levelGenerator;
     private float currentDifficulty = 0;
     private IPlayerShipInput shipInterface;
@@ -67,6 +69,21 @@ public class GameController : MonoBehaviour {
     }
     #endregion
 
+    #region COROUTINES
+    IEnumerator ScoreCheck()
+    {
+        while (state == gameState.play)
+        {
+            levelProgress1.currentScore += scoreBuffer;
+            scoreBuffer = 0;
+            yield return new WaitForSeconds(1);
+        }
+
+
+
+    }
+    #endregion
+
     #region MEMBER METHODS
     private void Update()
     {
@@ -96,13 +113,15 @@ public class GameController : MonoBehaviour {
                 shipInterface = FindObjectOfType<Ship>();
                 levelProgress1 = new LevelProgress();
                 levelGenerator = new LevelGenerator();
-                levelGenerator.roadPrefab = roadPrefab;
-                LevelProgress1.path = levelGenerator.CreateInitialPath();
+                levelGenerator.road = roadPrefab;
+                LevelProgress1.path = levelGenerator.CreateInitialPath(roadPrefab, obstaclePrefab);
                 shipInterface.InitializeShip();
                 break;
 
             case gameState.play:
                 shipInterface.StartShipMovement(true);
+                state = newState;
+                StartCoroutine(ScoreCheck());
                 break;
 
             case gameState.death:

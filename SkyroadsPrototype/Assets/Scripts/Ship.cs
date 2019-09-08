@@ -22,18 +22,14 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     private const float SPEED = 20;
     private const float SHIP_OFFSET_BOUNDS = 5.5f;
     private const float BOOST_SPEED_MULTIPLIER = 2;
-    private const float X_AXIS_MOVEMENT_SPEED = 2f;
+    private const float X_AXIS_MOVEMENT_SPEED = 4f;
     private const float SHIP_TILT_ANGLE = 20f;
+
+
     #endregion
 
     #region INITIALIZATION
-    private void Start()
-    {
-        transform.position = GameController.levelProgress.path[0];
-        transform.forward = Vector3.RotateTowards(transform.forward,
-                                                GameController.levelProgress.path[1] - transform.position,
-                                                100, 100);
-    }
+
     #endregion
 
     #region MEMBER METHODS
@@ -47,8 +43,8 @@ public class Ship : MonoBehaviour, IPlayerShipInput
 
     private void MoveTowardsNextPoint()
     {
-        if (transform.position.z >= GameController.levelProgress.path[targetPathPointIndex].z
-           && targetPathPointIndex + 2 < GameController.levelProgress.path.Length)
+        if (transform.position.z >= GameController.LevelProgress1.path[targetPathPointIndex].z
+           && targetPathPointIndex + 2 < GameController.LevelProgress1.path.Length)
         {
             targetPathPointIndex++;
         }
@@ -61,14 +57,14 @@ public class Ship : MonoBehaviour, IPlayerShipInput
         }
 
         Vector3 newShipPos = Vector3.MoveTowards(transform.position,
-                                                 GameController.levelProgress.path[targetPathPointIndex] + shipOffset,
+                                                 GameController.LevelProgress1.path[targetPathPointIndex] + shipOffset,
                                                  finalSpeed * Time.deltaTime);
 
 
         Vector3 newShipFoward = Vector3.RotateTowards(transform.forward,
-                                                 (GameController.levelProgress.path[targetPathPointIndex + 1] + shipOffset) - transform.position,
+                                                 (GameController.LevelProgress1.path[targetPathPointIndex + 1] + shipOffset) - transform.position,
                                                  finalSpeed * Time.deltaTime,
-                                                 0);
+                                                 finalSpeed  * Time.deltaTime);
 
         transform.position = newShipPos;
         transform.forward = newShipFoward;
@@ -76,7 +72,7 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     #endregion
 
     #region CALLBACKS
-    private void OnCollisionEnter(Collision collision)
+    private void OnTriggerEnter(Collider collision)
     {
         isMovingFoward = false;
         onShipCollision.Invoke();
@@ -84,7 +80,16 @@ public class Ship : MonoBehaviour, IPlayerShipInput
     #endregion
 
     #region API
-    public void StartShip(bool isTrue)
+    public void InitializeShip()
+    {
+        onShipCollision = new GameController.OnShipCollision(() => { });
+        transform.position = GameController.LevelProgress1.path[0];
+        transform.forward = Vector3.RotateTowards(transform.forward,
+                                                GameController.LevelProgress1.path[1] - transform.position,
+                                                100, 100);
+    }
+
+    public void StartShipMovement(bool isTrue)
     {
         isMovingFoward = isTrue;
 

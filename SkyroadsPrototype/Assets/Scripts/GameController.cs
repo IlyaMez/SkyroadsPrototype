@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour {
 
@@ -15,21 +16,25 @@ public class GameController : MonoBehaviour {
         public int waypointsGenerated;
         public int currentScore;
         public Vector3[] path;
+
     }
 
-    public static LevelProgress levelProgress;
+    private static LevelProgress levelProgress1;
+    public static LevelProgress LevelProgress1 { get => levelProgress1; }
     #endregion
 
-    #region EVENTS
+    #region EVENTS & DELEGATES
     public delegate void OnShipCollision();
-    public event OnShipCollision shipCollisionEvent;
+    public event OnShipCollision onShipCollision;
     #endregion
+
+
 
     #region MEMBER VARIABLES
     private bool gameStarted;
     private LevelGenerator levelGenerator;
     private float currentDifficulty = 0;
-    private IPlayerShipInput ship;
+    private IPlayerShipInput shipInterface;
     private gameState state = gameState.startScreen;
     private enum gameState { startScreen, play, death}
 
@@ -48,24 +53,17 @@ public class GameController : MonoBehaviour {
 
     #region INITIALIZTION
     void Start () {
-        ship = FindObjectOfType<Ship>();
-        levelProgress = new LevelProgress();
-        levelGenerator = new LevelGenerator();
-        levelGenerator.roadPrefab = roadPrefab;
-        levelGenerator.CreateInitialPath();
-        levelProgress.path = levelGenerator.path;
-        
-
+        SwitchGameState(gameState.startScreen);
     }
 
     private void OnDisable()
     {
-        ship.onShipCollision -= OnPlayerDeathCB;
+        shipInterface.onShipCollision -= OnPlayerDeathCB;
     }
 
     private void SubscribeToEvents()
     {
-        ship.onShipCollision += OnPlayerDeathCB;
+        shipInterface.onShipCollision += OnPlayerDeathCB;
     }
     #endregion
 
@@ -75,26 +73,19 @@ public class GameController : MonoBehaviour {
         switch (state)
         {
             case gameState.startScreen:
+                if (Input.anyKey)
+                {
+                    SwitchGameState(gameState.play);
+                }
                 break;
             case gameState.play:
-                CheckInput();
+                CheckShipInput();
                 break;
             case gameState.death:
                 break;
             default:
                 break;
         }
-        //if (ship.GetTargetPoint() == levelProgress.path.Length - 2)
-        //{
-        //    updatedifficulty();
-        //    debug_lock = true;
-        //    levelgenerator.updatewaypoints();
-        //    targetpathpoint = 0;
-        //    debug_lock = false;
-        //}
-        //moveship();
-      
-
     }
 
     private void SwitchGameState(gameState newState)
@@ -102,16 +93,29 @@ public class GameController : MonoBehaviour {
         switch (newState)
         {
             case gameState.startScreen:
+                shipInterface = FindObjectOfType<Ship>();
+                levelProgress1 = new LevelProgress();
+                levelGenerator = new LevelGenerator();
+                levelGenerator.roadPrefab = roadPrefab;
+                levelGenerator.CreateInitialPath();
+                LevelProgress1.path = levelGenerator.path;
+                shipInterface.InitializeShip();
                 break;
+
             case gameState.play:
+                shipInterface.StartShipMovement(true);
                 break;
+
             case gameState.death:
                 break;
+
             default:
                 break;
         }
+
+        state = newState;
     }
-    private void CheckInput()
+    private void CheckShipInput()
     {
 
         int inputDirection = 0;
@@ -131,15 +135,17 @@ public class GameController : MonoBehaviour {
             isBoosting = true;
         }
 
-        ship.MoveLeftRight(inputDirection);
-        ship.BoostShip(isBoosting);
+        shipInterface.MoveLeftRight(inputDirection);
+        shipInterface.BoostShip(isBoosting);
     }
+
+
     #endregion
 
     #region CALLBACKS
     private void OnPlayerDeathCB()
     {
-
+        SwitchGameState(gameState.death);
     }
     #endregion
 }

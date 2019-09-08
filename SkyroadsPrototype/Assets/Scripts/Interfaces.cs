@@ -13,8 +13,9 @@ public interface IPooledObject
 
 public interface IPlayerShipInput
 {
+    void InitializeShip();
     void MoveLeftRight(int dir);
-    void StartShip(bool isTrue);
+    void StartShipMovement(bool isTrue);
     void BoostShip(bool isTrue);
     int GetTargetPoint();
 

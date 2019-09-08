@@ -4,8 +4,9 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Atmosphere
   m_Shader: {fileID: 4800000, guid: d454de504e344e04a960a54338c35e64, type: 3}
   m_ShaderKeywords: 
@@ -39,7 +40,7 @@ Material:
     m_Colors:
     - _AtmoColor: {r: 0.5, g: 0.5, b: 1, a: 1}
     - _AtmosphereColor: {r: 0.5, g: 0.5, b: 1, a: 1}
-    - _Color: {r: 0.3647059, g: 0.6, b: 1, a: 1}
+    - _Color: {r: 1, g: 0.77404505, b: 0.36470592, a: 1}
     - _RimColor: {r: 0.5, g: 0.5, b: 1, a: 1}
     - _TintColor: {r: 0.5, g: 0.5, b: 1, a: 1}
 --- !u!1002 &2100001

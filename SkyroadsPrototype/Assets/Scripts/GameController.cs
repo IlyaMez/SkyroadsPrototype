@@ -8,23 +8,28 @@ public class GameController : MonoBehaviour {
 
 
     #region PUBLIC VARIABLES
-    public GameObject roadPrefab;
+    public GameObject roadPrefab; // NOTE: should be extended to array to support multiple prefab types, same with obstacles.
     public Obstacle obstaclePrefab;
-    public class LevelProgress
+
+    //Dataholder class with some unused data for future implementation.
+    //a readonly version is available for ease of access as a static variable.
+    public class SessionProgress
     {
         public float shipZ;
         public float lastPathPointZ;
         public int waypointsGenerated;
+        public int highScore;
         public int currentScore;
         public Vector3[] path;
 
     }
 
-    private static LevelProgress levelProgress1;
-    public static LevelProgress LevelProgress1 { get => levelProgress1; }
+  
+    public static SessionProgress SessionData { get => m_SessionData; }
     #endregion
 
     #region EVENTS & DELEGATES
+    //Declaration for event used in ship interface.
     public delegate void OnShipCollision();
     public event OnShipCollision onShipCollision;
     #endregion
@@ -32,26 +37,16 @@ public class GameController : MonoBehaviour {
 
 
     #region MEMBER VARIABLES
-    private int hightScore;
-    private int scoreBuffer = 0;
-    private LevelGenerator levelGenerator;
-    private float currentDifficulty = 0;
-    private IPlayerShipInput shipInterface;
-    private gameState state = gameState.startScreen;
-    private enum gameState { startScreen, play, death}
-
-
+    private static SessionProgress m_SessionData;
+    private int m_ScoreBuffer = 0;
+    private LevelGenerator m_LevelGenerator;
+    private SmoothFollow m_SmoothFollow;
+    private UIManager m_UIManager;
+    private IPlayerShipInput m_ShipInterface;
+    private gameState m_State = gameState.startScreen;
+    private enum gameState { startScreen, play, death} //Possible gamestates for the gamecotnroller to be in.
     #endregion
 
-    #region CONSTANTS
-    private const int WAYPOINTS_SEGMENT_LENGHT = 30;
-    private const float WAYPOINT_Z_DISTANCE = 20;
-    private const float MAX_WAYPOINT_X_SPREAD = 20;
-    private const float CURVE_SMOOTHNESS = 20;
-    private const float SHIP_SPEED = 30;
-    private const float MAX_DIFFICULTY = 40;
-    private const float PROGRESS_TO_DIFFICULTY_MULTI = 0.1F;
-    #endregion
 
     #region INITIALIZTION
     void Start () {
@@ -60,34 +55,42 @@ public class GameController : MonoBehaviour {
 
     private void OnDisable()
     {
-        shipInterface.onShipCollision -= OnPlayerDeathCB;
+        m_ShipInterface.onShipCollision -= OnPlayerDeathCB;
+        m_UIManager.restartRequest -= restartGame;
     }
 
     private void SubscribeToEvents()
     {
-        shipInterface.onShipCollision += OnPlayerDeathCB;
+        m_ShipInterface.onShipCollision += OnPlayerDeathCB;
+        m_UIManager.restartRequest += restartGame;
     }
     #endregion
 
     #region COROUTINES
+    //A coroutine used to update gathered score and save highscores to playerPrefs.
+    //*NOTE: Using playerPrefs for longterm user setting storage is not reccommended and an XML file might 
+    //be a better solution.
     IEnumerator ScoreCheck()
     {
-        while (state == gameState.play)
+        while (m_State == gameState.play)
         {
-            levelProgress1.currentScore += scoreBuffer;
-            scoreBuffer = 0;
+            m_SessionData.currentScore += m_ScoreBuffer;
+            if (m_SessionData.currentScore > m_SessionData.highScore)
+            {
+                m_SessionData.highScore = m_SessionData.currentScore;
+                PlayerPrefs.SetInt("Highscore", m_SessionData.highScore);
+                PlayerPrefs.Save();
+            }
+            m_ScoreBuffer = 1;
             yield return new WaitForSeconds(1);
         }
-
-
-
     }
     #endregion
 
     #region MEMBER METHODS
     private void Update()
     {
-        switch (state)
+        switch (m_State)
         {
             case gameState.startScreen:
                 if (Input.anyKey)
@@ -96,7 +99,7 @@ public class GameController : MonoBehaviour {
                 }
                 break;
             case gameState.play:
-                CheckShipInput();
+                CheckForShipInput();
                 break;
             case gameState.death:
                 break;
@@ -105,36 +108,58 @@ public class GameController : MonoBehaviour {
         }
     }
 
+    //Execute transition logic for each state.
     private void SwitchGameState(gameState newState)
     {
         switch (newState)
         {
+            //initialize game logic.
             case gameState.startScreen:
-                shipInterface = FindObjectOfType<Ship>();
-                levelProgress1 = new LevelProgress();
-                levelGenerator = new LevelGenerator();
-                levelGenerator.road = roadPrefab;
-                LevelProgress1.path = levelGenerator.CreateInitialPath(roadPrefab, obstaclePrefab);
-                shipInterface.InitializeShip();
+                if (PlayerPrefs.HasKey("Highscore") == false)
+                {
+                    PlayerPrefs.SetInt("Highscore", 0);
+                    PlayerPrefs.Save();
+                }
+         
+                m_UIManager = FindObjectOfType<UIManager>();
+                m_UIManager.ShowStartMessage();
+   
+                m_ShipInterface = FindObjectOfType<Ship>();
+                m_SmoothFollow = Camera.main.GetComponent<SmoothFollow>();
+                m_SessionData = new SessionProgress();
+                m_SessionData.highScore = PlayerPrefs.GetInt("Highscore");
+                m_LevelGenerator = new LevelGenerator();
+                m_LevelGenerator.road = roadPrefab;
+                SessionData.path = m_LevelGenerator.CreateInitialPath(roadPrefab, obstaclePrefab);
+                m_ShipInterface.InitializeShip();
+                SubscribeToEvents();
                 break;
 
             case gameState.play:
-                shipInterface.StartShipMovement(true);
-                state = newState;
+                m_ShipInterface.StartShipMovement(true);
+                m_UIManager.ToggleTimer();
+                m_State = newState;
                 StartCoroutine(ScoreCheck());
                 break;
 
             case gameState.death:
+                m_UIManager.ToggleTimer();
+                m_UIManager.ShowDeathMessage();
                 break;
 
             default:
                 break;
         }
 
-        state = newState;
+        m_State = newState;
     }
 
-    private void CheckShipInput()
+    private void restartGame()
+    {
+        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+    }
+
+    private void CheckForShipInput()
     {
 
         int inputDirection = 0;
@@ -154,10 +179,28 @@ public class GameController : MonoBehaviour {
             isBoosting = true;
         }
 
-        shipInterface.MoveLeftRight(inputDirection);
-        shipInterface.BoostShip(isBoosting);
-    }
+        m_ShipInterface.MoveLeftRight(inputDirection);
+        m_ShipInterface.BoostShip(isBoosting);
 
+        ApplyCameraZoom(isBoosting);
+
+
+    }
+    
+    // Smoothly zoom the camera on boost
+    private void ApplyCameraZoom(bool isBoosting)
+    {
+        if (isBoosting)
+        {
+            m_SmoothFollow.distance = Mathf.Lerp(m_SmoothFollow.distance, 7, 0.1f);
+
+            m_ScoreBuffer = 5;
+        }
+        if (!isBoosting)
+        {
+            m_SmoothFollow.distance = Mathf.Lerp(m_SmoothFollow.distance, 10, 0.1f);
+        }
+    }
 
     #endregion
 
